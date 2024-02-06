@@ -21,3 +21,7 @@ func EnvMongoURI() string {
 func EnvPort() string {
 	return os.Getenv("PORT")
 }
+
+func EnvSecretKey() string {
+	return os.Getenv("JWT_SECRET")
+}
