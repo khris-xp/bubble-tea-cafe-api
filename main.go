@@ -19,6 +19,7 @@ func main() {
 	configs.ConnectDB()
 	routes.UserRoutes(app)
 	routes.CategoryRoutes(app)
+	routes.ToppingRoute(app)
 
 	port := configs.EnvPort()
 	app.Listen(":" + port)
