@@ -15,13 +15,16 @@ func loadEnv() {
 }
 
 func EnvMongoURI() string {
+	loadEnv()
 	return os.Getenv("MONGODB_URL")
 }
 
 func EnvPort() string {
+	loadEnv()
 	return os.Getenv("PORT")
 }
 
 func EnvSecretKey() string {
+	loadEnv()
 	return os.Getenv("JWT_SECRET")
 }

@@ -164,3 +164,39 @@ func (r *UserRepository) GetAllUsers(ctx context.Context) ([]models.User, error)
 
 	return users, nil
 }
+
+func (r *UserRepository) AddMenuToCart(ctx context.Context, cart models.Cart, userID primitive.ObjectID) (models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, userTimeout)
+	defer cancel()
+
+	var user models.User
+	err := userCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	menuExists := false
+	for _, item := range user.Cart {
+		if item.MenuId == cart.MenuId {
+			menuExists = true
+			break
+		}
+	}
+
+	if menuExists {
+		return user, nil
+	}
+
+	user.Cart = append(user.Cart, cart)
+
+	_, err = userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		bson.M{"$set": bson.M{"cart": user.Cart}},
+	)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}

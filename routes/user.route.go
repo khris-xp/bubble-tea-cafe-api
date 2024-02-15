@@ -19,4 +19,5 @@ func UserRoutes(app *fiber.App) {
 	auth.Get("/user/:id", middlewares.AuthMiddleware(), userController.GetUserById)
 	auth.Get("/profile", middlewares.AuthMiddleware(), userController.GetUserProfile)
 	auth.Get("/users", middlewares.AuthStaffMiddleware(), userController.GetAllUsers)
+	auth.Post("/add-to-cart", middlewares.AuthMiddleware(), userController.AddMenuToCart)
 }

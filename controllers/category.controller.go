@@ -1,20 +1,11 @@
 package controllers
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/khris-xp/bubble-milk-tea/configs"
 	"github.com/khris-xp/bubble-milk-tea/models"
 	"github.com/khris-xp/bubble-milk-tea/repositories"
 	"github.com/khris-xp/bubble-milk-tea/responses"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
-var (
-	categoryCollection *mongo.Collection = configs.GetCollection(configs.DB, "categories")
-	categoryTimeout                      = 10 * time.Second
 )
 
 type CategoryController struct {

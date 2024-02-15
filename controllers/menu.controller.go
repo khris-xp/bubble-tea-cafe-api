@@ -1,20 +1,11 @@
 package controllers
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/khris-xp/bubble-milk-tea/configs"
 	"github.com/khris-xp/bubble-milk-tea/models"
 	"github.com/khris-xp/bubble-milk-tea/repositories"
 	"github.com/khris-xp/bubble-milk-tea/responses"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
-var (
-	menuCollection *mongo.Collection = configs.GetCollection(configs.DB, "menu")
-	menuTimeOut                      = 10 * time.Second
 )
 
 type MenuController struct {
@@ -91,4 +82,28 @@ func (mc *MenuController) DeleteMenu(c *fiber.Ctx) error {
 	}
 
 	return responses.DeleteMenuSuccessResponse(c, fiber.StatusOK, "success", nil)
+}
+
+func (mc *MenuController) AddToppingToMenu(c *fiber.Ctx) error {
+	var topping models.Topping
+	id := c.Params("id")
+	if err := c.BodyParser(&topping); err != nil {
+		return responses.MenuErrorResponse(c, fiber.StatusBadRequest, "invalid request body")
+	}
+
+	menuID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return responses.MenuErrorResponse(c, fiber.StatusBadRequest, "invalid menu id")
+	}
+	toppingID, err := primitive.ObjectIDFromHex(topping.Id)
+	if err != nil {
+		return responses.MenuErrorResponse(c, fiber.StatusBadRequest, "invalid menu id")
+	}
+
+	err = mc.MenuRepo.AddToppingToMenu(c.Context(), menuID, toppingID)
+	if err != nil {
+		return responses.MenuErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return responses.AddToppingToMenuSuccessResponse(c, fiber.StatusCreated, "success", topping)
 }

@@ -1,20 +1,20 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/khris-xp/bubble-milk-tea/configs"
 	"github.com/khris-xp/bubble-milk-tea/models"
 	"github.com/khris-xp/bubble-milk-tea/repositories"
 	"github.com/khris-xp/bubble-milk-tea/responses"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
-	userValidate = validator.New()
-	jwtSecret    = []byte(configs.EnvSecretKey())
+	jwtSecret = []byte(configs.EnvSecretKey())
 )
 
 type AuthController struct {
@@ -109,4 +109,63 @@ func (ac *AuthController) GetAllUsers(c *fiber.Ctx) error {
 	}
 
 	return responses.GetUserSuccessResponse(c, fiber.StatusOK, users)
+}
+
+func (ac *AuthController) AddMenuToCart(c *fiber.Ctx) error {
+	var cart models.Cart
+	token := c.Get("Authorization")
+	if token == "" {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || !parsedToken.Valid {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	user, err := ac.UserRepo.GetUserProfile(c.Context(), email)
+
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	if err := c.BodyParser(&cart); err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid request body")
+	}
+
+	for _, item := range user.Cart {
+		if item.MenuId == cart.MenuId {
+			return responses.UserErrorResponse(c, fiber.StatusBadRequest, "menu already exists in the cart")
+		}
+	}
+
+	cart.UserId = user.Id
+	cart.Id = primitive.NewObjectID().Hex()
+	userID, err := primitive.ObjectIDFromHex(user.Id)
+	cart.Status = "pending"
+	cart.CreatedAt = time.Now()
+	cart.UpdatedAt = time.Now()
+
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid user id")
+	}
+	_, err = ac.UserRepo.AddMenuToCart(c.Context(), cart, userID)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusInternalServerError, "internal server error")
+	}
+
+	return responses.AddMenuToCartSuccessResponse(c, fiber.StatusCreated, "success", cart)
 }

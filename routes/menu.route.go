@@ -16,6 +16,7 @@ func MenuRoutes(app *fiber.App) {
 	menu.Get("/", menuController.GetAllMenu)
 	menu.Get("/:id", menuController.GetMenuByID)
 	menu.Post("/", middlewares.AuthStaffMiddleware(), menuController.CreateMenu)
+	menu.Post("/add-topping/:id", middlewares.AuthMiddleware(), menuController.AddToppingToMenu)
 	menu.Put("/:id", middlewares.AuthStaffMiddleware(), menuController.UpdateMenu)
 	menu.Delete("/:id", middlewares.AuthStaffMiddleware(), menuController.DeleteMenu)
 }

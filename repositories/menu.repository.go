@@ -93,3 +93,15 @@ func (mr *MenuRepository) DeleteMenu(ctx context.Context, id primitive.ObjectID)
 
 	return nil
 }
+
+func (mr *MenuRepository) AddToppingToMenu(ctx context.Context, menuID primitive.ObjectID, toppingID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(ctx, menuTimeOut)
+	defer cancel()
+
+	_, err := menuCollection.UpdateOne(ctx, bson.M{"_id": menuID}, bson.M{"$push": bson.M{"toppings": toppingID}})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
