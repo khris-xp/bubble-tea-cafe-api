@@ -169,3 +169,50 @@ func (ac *AuthController) AddMenuToCart(c *fiber.Ctx) error {
 
 	return responses.AddMenuToCartSuccessResponse(c, fiber.StatusCreated, "success", cart)
 }
+
+func (ac *AuthController) RemoveMenuFromCart(c *fiber.Ctx) error {
+	cartId := c.Params("id")
+
+	token := c.Get("Authorization")
+	if token == "" {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || !parsedToken.Valid {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	user, err := ac.UserRepo.GetUserProfile(c.Context(), email)
+
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	id, err := primitive.ObjectIDFromHex(cartId)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid cart id")
+	}
+
+	user_id, err := primitive.ObjectIDFromHex(user.Id)
+
+	_, err = ac.UserRepo.RemoveMenuFromCart(c.Context(), id, user_id)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return responses.RemoveMenuFromCartSuccessResponse(c, fiber.StatusOK, "success", nil)
+}

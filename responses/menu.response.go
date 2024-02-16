@@ -74,3 +74,13 @@ func AddMenuToCartSuccessResponse(c *fiber.Ctx, status int, message string, data
 
 	return c.Status(status).JSON(menuResponse)
 }
+
+func RemoveMenuFromCartSuccessResponse(c *fiber.Ctx, status int, message string, data interface{}) error {
+	menuResponse := types.MenuResponse{
+		Status:  status,
+		Message: message,
+		Data:    data,
+	}
+
+	return c.Status(status).JSON(menuResponse)
+}
