@@ -28,3 +28,11 @@ func UserErrorResponse(c *fiber.Ctx, statusCode int, message string) error {
 		Data:    nil,
 	})
 }
+
+func EditMenuInCartSuccessResponse(c *fiber.Ctx, statusCode int, message string, data interface{}) error {
+	return c.Status(statusCode).JSON(types.MenuResponse{
+		Status:  statusCode,
+		Message: message,
+		Data:    data,
+	})
+}

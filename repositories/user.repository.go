@@ -201,6 +201,34 @@ func (r *UserRepository) AddMenuToCart(ctx context.Context, cart models.Cart, us
 	return user, nil
 }
 
+func (r *UserRepository) EditMenuInCart(ctx context.Context, cart models.Cart, cartId primitive.ObjectID, userID primitive.ObjectID) (models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, userTimeout)
+	defer cancel()
+
+	var user models.User
+	err := userCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	for i, item := range user.Cart {
+		if item.Id == cartId.Hex() {
+			user.Cart[i] = cart
+		}
+	}
+
+	_, err = userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		bson.M{"$set": bson.M{"cart": user.Cart}},
+	)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
 func (r *UserRepository) RemoveMenuFromCart(ctx context.Context, cartID primitive.ObjectID, userId primitive.ObjectID) (models.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, userTimeout)
 	defer cancel()

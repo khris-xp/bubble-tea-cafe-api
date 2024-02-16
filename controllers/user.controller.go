@@ -170,6 +170,66 @@ func (ac *AuthController) AddMenuToCart(c *fiber.Ctx) error {
 	return responses.AddMenuToCartSuccessResponse(c, fiber.StatusCreated, "success", cart)
 }
 
+func (ac *AuthController) EditMenuInCart(c *fiber.Ctx) error {
+	cartId := c.Params("id")
+	var cart models.Cart
+	token := c.Get("Authorization")
+	if token == "" {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || !parsedToken.Valid {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	user, err := ac.UserRepo.GetUserProfile(c.Context(), email)
+
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	if err := c.BodyParser(&cart); err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid request body")
+	}
+
+	id, err := primitive.ObjectIDFromHex(cartId)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid cart id")
+	}
+
+	userID, err := primitive.ObjectIDFromHex(user.Id)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid user id")
+	}
+
+	cart.Id = cartId
+	cart.UserId = user.Id
+	cart.Status = "pending"
+	cart.UpdatedAt = time.Now()
+
+	_, err = ac.UserRepo.EditMenuInCart(c.Context(), cart, userID, id)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusInternalServerError, "internal server error")
+	}
+
+	return responses.EditMenuInCartSuccessResponse(c, fiber.StatusOK, "success", cart)
+
+}
+
 func (ac *AuthController) RemoveMenuFromCart(c *fiber.Ctx) error {
 	cartId := c.Params("id")
 
