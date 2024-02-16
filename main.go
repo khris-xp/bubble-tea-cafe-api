@@ -27,6 +27,7 @@ func main() {
 	routes.CategoryRoutes(app)
 	routes.ToppingRoute(app)
 	routes.MenuRoutes(app)
+	routes.OrderRoutes(app)
 
 	port := configs.EnvPort()
 	app.Listen(":" + port)
