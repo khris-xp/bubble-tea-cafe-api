@@ -233,3 +233,25 @@ func (r *UserRepository) RemoveMenuFromCart(ctx context.Context, cartID primitiv
 
 	return user, nil
 }
+
+func (r *UserRepository) RemoveAllMenuinCart(ctx context.Context, userId primitive.ObjectID) (models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, userTimeout)
+	defer cancel()
+
+	var user models.User
+	err := userCollection.FindOne(ctx, bson.M{"_id": userId}).Decode(&user)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	_, err = userCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": userId},
+		bson.M{"$set": bson.M{"cart": []models.Cart{}}},
+	)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}

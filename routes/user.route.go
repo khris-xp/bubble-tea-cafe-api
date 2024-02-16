@@ -21,4 +21,5 @@ func UserRoutes(app *fiber.App) {
 	auth.Get("/users", middlewares.AuthStaffMiddleware(), userController.GetAllUsers)
 	auth.Post("/add-to-cart", middlewares.AuthMiddleware(), userController.AddMenuToCart)
 	auth.Delete("/remove-from-cart/:id", middlewares.AuthMiddleware(), userController.RemoveMenuFromCart)
+	auth.Delete("/remove-all-from-cart", middlewares.AuthMiddleware(), userController.RemoveAllMenuinCart)
 }

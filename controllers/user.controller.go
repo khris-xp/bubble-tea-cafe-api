@@ -209,7 +209,55 @@ func (ac *AuthController) RemoveMenuFromCart(c *fiber.Ctx) error {
 
 	user_id, err := primitive.ObjectIDFromHex(user.Id)
 
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid user id")
+	}
+
 	_, err = ac.UserRepo.RemoveMenuFromCart(c.Context(), id, user_id)
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return responses.RemoveMenuFromCartSuccessResponse(c, fiber.StatusOK, "success", nil)
+}
+
+func (ac *AuthController) RemoveAllMenuinCart(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+	if token == "" {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || !parsedToken.Valid {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	user, err := ac.UserRepo.GetUserProfile(c.Context(), email)
+
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	user_id, err := primitive.ObjectIDFromHex(user.Id)
+
+	if err != nil {
+		return responses.UserErrorResponse(c, fiber.StatusBadRequest, "invalid user id")
+	}
+
+	_, err = ac.UserRepo.RemoveAllMenuinCart(c.Context(), user_id)
 	if err != nil {
 		return responses.UserErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
